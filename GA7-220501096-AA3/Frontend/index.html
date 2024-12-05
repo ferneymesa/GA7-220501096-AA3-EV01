@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Cerberus</title>
+</head>
+<body>
+    <div class="main-container">
+        <div class="task-container">
+            <div id="clock" class="clock-container"></div>
+            <h1>Gestión de Usuarios</h1>
+            <div class="search-form">
+                <input type="text" id="searchCedula" placeholder="Buscar por Cédula" class="inputBuscar">
+                <button onclick="searchTask()" class="BtnBuscar">Buscar</button>
+            </div>
+            <div class="task-form">
+                <input type="text" id="cedula" placeholder="Número de Documento">
+                <input type="text" id="nombre" placeholder="Nombre de Usuario">
+                <input type="tel" id="telefono" placeholder="Teléfono de Usuario">
+                <input type="email" id="correo" placeholder="Correo Electrónico">
+                <input type="text" id="area" placeholder="Área de Trabajo">
+                <textarea id="description" placeholder="Observaciones"></textarea>
+                <button onclick="addTask()">Agregar Usuarios</button>
+                <button id="clearButton" onclick="clearFields()">Limpiar</button>
+            </div>
+            <div id="tasks" class="tasks-list"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
