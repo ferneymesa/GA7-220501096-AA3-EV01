@@ -70,20 +70,29 @@ async function addTask() {
     
     // Validar solo los campos obligatorios
     if (!cedulaInput.value || !nombreInput.value || !telefonoInput.value || 
-        !correoInput.value || !areaInput.value) // Esto evalúa si alguno de los campos de entrada está vacío o no tiene un valor válido. 
-        {
+        !correoInput.value || !areaInput.value) {
         alert('Por favor, ingrese los campos obligatorios: Número de documento, Nombre de usuario, Teléfono, Correo Electrónico y Área de trabajo');
         return;
     }
 
+    // Verificar si la cédula ya existe
+    const existingTasks = await fetch(apiUrl);
+    const tasks = await existingTasks.json();
+    const cedulaExists = tasks.some(task => task.cedula === cedulaInput.value.trim());
+
+    if (cedulaExists) {
+        alert('La cédula ya está registrada.'); // Mensaje de alerta si la cédula ya existe
+        return;
+    }
+
     const datos = {
-        title: nombreInput.value.trim(), //La función trim() se utiliza para asegurarse de que no haya espacios
+        title: nombreInput.value.trim(),
         cedula: cedulaInput.value.trim(),
         nombre: nombreInput.value.trim(),
         telefono: telefonoInput.value.trim(),
         correo: correoInput.value.trim(),
         area: areaInput.value.trim(),
-        description: descriptionInput.value.trim() || '' // Asignar string vacío si no hay valor
+        description: descriptionInput.value.trim() || ''
     };
 
     // Imprimir los datos que se están enviando para verificar errores
@@ -153,52 +162,58 @@ async function deleteTask(id) {
 
 // Función para buscar una tarea por cédula
 async function searchTask() {
-    const cedulaInput = document.getElementById('searchCedula').value.trim();
-    if (!cedulaInput) {
+    const cedulaInput = document.getElementById('searchCedula');
+    const cedulaValue = cedulaInput.value.trim();
+    
+    if (!cedulaValue) {
         alert('Por favor, ingrese una cédula para buscar.');
         return;
     }
 
     try {
-        const response = await fetch(`${apiUrl}?cedula=${cedulaInput}`);
+        const response = await fetch(`${apiUrl}?cedula=${cedulaValue}`);
         const tasks = await response.json();
         const tasksContainer = document.getElementById('tasks');
         tasksContainer.innerHTML = '';
 
-        if (tasks.length === 0) {
-            alert('No se encontraron tareas con esa cédula.');
+        // Verificar si la cédula ingresada coincide exactamente con alguna tarea
+        const foundTask = tasks.find(task => task.cedula === cedulaValue);
+
+        if (!foundTask) {
+            alert('Cédula no existe en la base de datos.'); // Mensaje de alerta si no se encuentra la tarea
+            cedulaInput.value = ''; // Limpiar el campo de búsqueda
             return;
         }
 
-        // Asumiendo que solo se busca una tarea por cédula, tomamos la primera
-        const task = tasks[0];
-
-        // Llenar los campos de gestión con los datos de la tarea
-        document.getElementById('cedula').value = task.cedula;
-        document.getElementById('nombre').value = task.nombre;
-        document.getElementById('telefono').value = task.telefono;
-        document.getElementById('correo').value = task.correo;
-        document.getElementById('area').value = task.area;
-        document.getElementById('description').value = task.description;
+        // Llenar los campos de gestión con los datos de la tarea encontrada
+        document.getElementById('cedula').value = foundTask.cedula;
+        document.getElementById('nombre').value = foundTask.nombre;
+        document.getElementById('telefono').value = foundTask.telefono;
+        document.getElementById('correo').value = foundTask.correo;
+        document.getElementById('area').value = foundTask.area;
+        document.getElementById('description').value = foundTask.description;
 
         // Mostrar la tarea en la lista 
         tasksContainer.innerHTML += `
             <div>
                 <h3>Usuario</h3>
-                <p>Cedula: ${task.cedula}</p>
-                <p>Nombre: ${task.nombre}</p>
-                <p>Teléfono: ${task.telefono}</p>
-                <p>Correo Electrónico: ${task.correo}</p>
-                <p>Área de Trabajo: ${task.area}</p>
-                <p>${task.description}</p>
-                <button onclick="updateTask('${task._id}')">Editar</button>
-                <button onclick="deleteTask('${task._id}')">Eliminar</button>
+                <p>Cedula: ${foundTask.cedula}</p>
+                <p>Nombre: ${foundTask.nombre}</p>
+                <p>Teléfono: ${foundTask.telefono}</p>
+                <p>Correo Electrónico: ${foundTask.correo}</p>
+                <p>Área de Trabajo: ${foundTask.area}</p>
+                <p>${foundTask.description}</p>
+                <button onclick="updateTask('${foundTask._id}')">Editar</button>
+                <button onclick="deleteTask('${foundTask._id}')">Eliminar</button>
             </div>
         `;
     } catch (error) {
         console.error('Error:', error);
     }
-}// Fin Función para buscar una tarea por cédula
+
+    // Limpiar el campo de búsqueda al final
+    cedulaInput.value = '';
+} // Fin Función para buscar una tarea por cédula
 
 // Funcion Limpiar
 function clearFields() {
@@ -208,7 +223,53 @@ function clearFields() {
     document.getElementById('correo').value = '';
     document.getElementById('area').value = '';
     document.getElementById('description').value = '';
+    
+    // Actualizar la lista de tareas
+    getTasks();
 } // Fin Funcion Limpiar
 
 //Inicializamos la funcion de getTasks
 getTasks()
+
+// Agregar un evento de entrada para validar el campo de cédula
+const cedulaInput = document.getElementById('cedula');
+cedulaInput.addEventListener('input', function() {
+    const originalValue = this.value; // Guardar el valor original
+    this.value = this.value.replace(/[^0-9]/g, ''); // Reemplaza cualquier carácter que no sea un número
+
+    // Verificar si el valor ha cambiado
+    if (this.value !== originalValue) {
+        alert('El campo cédula solo acepta números.'); // Mensaje de alerta
+    }
+});
+
+// Agregar un evento de entrada para validar el campo de telefono
+const telefonoInput = document.getElementById('telefono');
+telefonoInput.addEventListener('input', function() {
+    const originalValue = this.value; // Guardar el valor original
+    this.value = this.value.replace(/[^0-9-.]/g, ''); // Reemplaza cualquier carácter que no sea un número
+
+    // Verificar si el valor ha cambiado
+    if (this.value !== originalValue) {
+        alert('El campo teléfono solo acepta números.'); // Mensaje de alerta
+    }
+});
+
+// constantes necesarias para funcion validar
+const formulario = document.getElementById('formulario');
+const correoInput = document.querySelector('#formulario #correo');
+
+const expresion = { 
+    correo: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/ 
+};
+
+const validarCorreo = () => { 
+    const correoValor = correoInput.value.trim(); // Obtener el valor del campo y eliminar espacios
+    if (!expresion.correo.test(correoValor)) {
+        alert('El campo correo no es un correo válido.'); // Mensaje de alerta
+        correoInput.value = ''; // Limpiar el campo de correo
+    }
+};
+
+// Agregar el evento blur para validar el campo de correo al hacer clic en otro campo
+correoInput.addEventListener('blur', validarCorreo);
